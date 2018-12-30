@@ -1,0 +1,3 @@
+Grade: 90.7
+Comments:
+You seem not using ECE551PATH and you did not do step4. inc does not work please read the README.Some of your function is long and your commend is not enough for me to understand you code. Impelement your function in header file is not a good practice. You should declare your function in headfile and implement them cpp file.

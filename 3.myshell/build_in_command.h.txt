@@ -1,0 +1,154 @@
+#ifndef __BUILD_IN_COMMAND__
+#define __BUILD_IN_COMMAND__
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+
+bool is_build_in_cmd(std::string cmd) {  //check if cmd is build in cmd
+  if (!cmd.compare("cd") || !cmd.compare("set") || !cmd.compare("export"))
+    return true;
+  return false;
+}
+
+void ChangeDir(char * arg, int size_arg) {
+  if (size_arg > 3) {  //cannot cd to more than one directory
+
+    std::cout << "argvs is empty\n";
+    exit(EXIT_FAILURE);
+  }
+  else if (size_arg <= 2) {  //no argument: cd to HOME
+    std::string home_path(getenv("HOME"));
+    if (chdir(home_path.c_str()) == 0) {
+      return;
+    }
+  }
+  else {  //cd to a certain path from arg[1]
+    std::string redir_path(arg);
+    if (chdir(arg) == 0) {
+      return;
+    }
+    else {
+      std::cout << "path cannot be parsed\n";
+    }
+  }
+}
+
+bool is_valid_var(
+    char one_char_in_line) {  //for set, check if input comply with rule:number,letters,underscore
+  if (one_char_in_line >= 'a' && one_char_in_line <= 'z')
+    return true;
+  if (one_char_in_line >= 'A' && one_char_in_line <= 'Z')
+    return true;
+  if (one_char_in_line >= '0' && one_char_in_line <= '9')
+    return true;
+  if (one_char_in_line == '_')
+    return true;
+  return false;
+}
+
+void replace_input_with_var(
+    std::string & line,
+    std::map<std::string, std::string> &
+        var_map) {  //replace $var in input line by corresponding value from map
+  size_t i = 0;
+  std::string ans;
+  for (; i < line.size(); i++) {
+    if (line[i] != '$')
+      ans += line[i];  //i is the position for "$"
+    else {
+      for (size_t j = 1; j < line.size() - i && is_valid_var(line[i + j]);
+           j++) {  //replace $var with value
+
+        std::string tmp = line.substr(i + 1, j);  //check if it is local variable
+        if (var_map.count(tmp)) {
+          ans += var_map[tmp];
+          i += j;
+          break;
+        }
+        else {
+          if (getenv(tmp.c_str()) != NULL) {
+            std::string from_env(
+                getenv(tmp.c_str()));  //check if it is contained in the environment
+            ans += from_env;
+            i += j;
+            continue;
+          }
+        }
+      }
+    }
+  }
+  line = ans;
+}
+
+void AddVar(std::string & line,
+            std::map<std::string, std::string> & var_map,
+            int size_arg) {  //implement set,put the corresponding var and value into the map
+  std::string key;
+  std::string value = "";
+  size_t i = 0;
+  if (size_arg <= 2) {
+    std::cout << "insufficient set argument\n";
+    exit(EXIT_FAILURE);
+  }
+  while (line[i] == ' ') {  // ignore the leading whitespace
+    i++;
+  }
+  while (line[i] != ' ') {  // ignore the "set"
+    i++;
+  }
+
+  while (line[i] == ' ') {  //ignore the whitespace between set and the var
+    i++;
+  }
+  while (line[i] != ' ') {
+    if (is_valid_var(line[i])) {
+      key += line[i];  //check if the input var is valid
+    }
+    else {
+      std::cout << "invalid var\n";
+      exit(EXIT_FAILURE);
+    }
+    i++;
+  }
+  if (i + 2 <= line.size()) {  //store all string after var as value
+    value = line.substr(i + 1);
+  }
+  var_map[key] = value;  //for case only var no value, make the value ""
+}
+
+void ExportVal(char * arg,
+               int size_arg,
+               std::map<std::string, std::string> var_map) {  // export value to environment
+  if (size_arg > 3) {
+    std::cout << "too much var\n";
+    exit(EXIT_FAILURE);
+  }
+  else if (size_arg <= 2) {
+    std::cout << "no var to input\n";
+    exit(EXIT_FAILURE);
+  }
+  else {
+    std::string key(arg);
+    if (var_map.count(key) > 0) {
+      if (setenv(arg, var_map[key].c_str(), 1) == 0) {
+        return;
+      }
+    }
+    else
+      std::cout << "no such var \n";
+  }
+}
+
+#endif

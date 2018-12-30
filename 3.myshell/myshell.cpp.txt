@@ -1,0 +1,116 @@
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include "build_in_command.h"
+#include "parse_command.h"
+extern char ** environ;
+
+void prompt_dir() {  //prompt current directory
+  char * curdir = get_current_dir_name();
+  std::cout << "myshell:" << curdir << " $ ";
+  free(curdir);
+}
+
+void end_loop(int size_arg,
+              char **& arg) {  //prompt and free memory from arg which sore the argument
+  prompt_dir();
+  for (int n = 0; n < size_arg; n++) {
+    free(arg[n]);
+  }
+  free(arg);
+}
+
+int main(int argc, char * argv[]) {
+  std::string line;
+  prompt_dir();
+  std::map<std::string, std::string> var_map;  //store the var for third step:"set var value"
+  while (true) {
+    //following code deal with corner case for input line
+    std::getline(std::cin, line);
+    if (std::cin.eof() == 1) {  //corner case: exit with ctrl+D
+      std::cout << "\nexit my shell\n";
+      break;
+    }
+    if (line == "") {  // corner case: enter without input string
+      prompt_dir();
+      continue;
+    }
+    if (line.find("$") != std::string::npos) {  //change $varname to corresponding value
+      replace_input_with_var(line, var_map);
+    }
+
+    //following code deal with general input line parse them into command and arguments
+    bool valid_cmd = true;  //check if cmd is valid
+    std::string cmd = parse_cmd(line, valid_cmd);
+    if (!valid_cmd) {
+      prompt_dir();
+      continue;
+    }
+    if (cmd.compare("exit") == 0) {  //after parsed,if cmd is exit then exit the shell
+      std::cout << "exit the shell\n";
+      break;
+    }
+    int size_arg;  //amount of arguments
+    char ** arg = parse_arg(cmd, line, size_arg);
+
+    //following code making a shell by using fork,wait,execve,
+    int status;
+    pid_t cpid;
+    cpid = fork();  //create the shell, the following code structure is mainly from "man waitpid"
+    if (cpid < 0) {
+      perror("fork");
+      exit(EXIT_FAILURE);
+    }
+    else if (cpid == 0) {
+      if (is_build_in_cmd(cmd)) {  //check if cmd is build in cmd(aka:cd/set/export)
+        if (cmd.compare("cd") == 0) {
+          ChangeDir(arg[1], size_arg);
+        }
+        else if (cmd.compare("set") == 0) {
+          AddVar(line, var_map, size_arg);
+        }
+        else if (cmd.compare("export") == 0) {
+          ExportVal(arg[1], size_arg, var_map);
+        }
+        end_loop(size_arg, arg);  //after excute, all need to free memory before going to next step
+        continue;
+      }
+      else {
+        execve(cmd.c_str(), arg, environ);  //excute the command which is not build in command
+        perror("cannot execve");
+        exit(EXIT_FAILURE);
+      }
+    }
+    else {  //following code are from "man waitpid"
+      do {
+        pid_t w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);
+        if (w == -1) {
+          perror("waitpid");
+          exit(EXIT_FAILURE);
+        }
+        if (WIFEXITED(status)) {
+          printf("Program exited with status %d\n", WEXITSTATUS(status));
+        }
+        else if (WIFSIGNALED(status)) {
+          printf("Program was killed by signal %d\n", WTERMSIG(status));
+        }
+      } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+    end_loop(size_arg, arg);  //free memory before going to next step
+  }
+
+  return EXIT_SUCCESS;
+}

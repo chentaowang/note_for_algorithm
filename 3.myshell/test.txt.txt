@@ -1,0 +1,873 @@
+
+==================================
+***test_case for Command Shell***
+==================================
+*Note:
+*I do not succeed in finishing step4. The test will not cover that.
+*For others, I test them with my finished program.Let's check one by one.
+*all the step is run after runing 1.0
+*there is a echo_test file inside of ./test directory, which can print
+*all the element from argv[0] to argv[n].(one element per line)
+
+Step 1: Read a command name and, run it
+-----------------------------------------
+1.0  (enter the shell, all the following other steps are run in this shell)
+*Run ./myshell
+        in "cw373@ece551:~/ece551/mp_miniproject/project$"
+        (enter the shell, all the following other steps are run in this shell)
+*Output:
+
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****enter the shell with prompt
+
+1.1
+*Run "/bin/ls"
+*Output:
+
+build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****the same output as run /bin/ls in normal shell
+
+1.2
+*Run "exit"
+*Output:
+
+exit the shell
+Program exited with status 0
+cw373@ece551:~/ece551/mp_miniproject/project$
+
+**reason for correct:
+****exit the designed shell and go back to server
+
+1.3
+*tap Ctrl+D
+*Output:
+
+exit my shell
+cw373@ece551:~/ece551/mp_miniproject/project$
+
+**reason for correct:
+****Ctrl+D similar to the input enter EOF inside of the file
+****exit the designed shell and go back to server
+
+1.4
+*Run "/bin/cat Makefile"
+*Output:
+
+myshell:myshell.cpp
+        g++ -o myshell -ggdb3 -Wall -Werror -pedantic -std=gnu++98 myshell.cpp
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****myshell can receive argument
+****for cat:display the content of Makefile, the same output as we run /bin/cat Makefile in normal shell
+
+1.5
+*Run "     /bin/cat      Makefile    "(sparse input, with leading whitespace and trailing whitespace, more than one separating white space)
+*Output:
+
+myshell:myshell.cpp
+        g++ -o myshell -ggdb3 -Wall -Werror -pedantic -std=gnu++98 myshell.cpp
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****shell can ignore the extra white space
+****display the content of Makefile, the same output as we run /bin/cat Makefile in normal shell
+
+
+1.6
+*Run "/usr/bin/clear"
+*Output:
+
+(all the words above is cleared)
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****clear the operation and word above, the same output as we run /usr/bin/clear Makefile in normal shell
+
+1.7
+*Run "/bin/cat #@!4faks"
+*Output:
+
+/bin/cat: '#@!4faks': No such file or directory
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****cat file which doesn't exist, the same output as we run /usr/bin/clear Makefile in normal shell
+
+1.8
+*Run ""(input nothing,just enter)
+*Output:
+
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****same as we do in our original shell
+
+1.9
+*Run "/bin/ls -a"
+*Output:
+
+.  ..  build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+
+**reason for correct:
+****myshell can take in descriptions
+****same as we do in our original shell
+
+1.10
+*Run "/bin/cat . . "
+*Output:
+/bin/cat: .: Is a directory
+/bin/cat: .: Is a directory
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****cat two ".",which is two directories, the same output as we run /usr/bin/clear Makefile in normal shell
+
+1.11
+(1)*Run "/bin/ls fdnsajklnv213!@!jda "
+*Output:
+e
+/bin/ls: cannot access 'fdnsajklnv213!@!jda': No such file or directory
+Program exited with status 2
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****ls a file which doesn't exit, the same output as we run it in normal shell
+(2)
+*Run "/bin/ls fdnsa jklnv213!@!jda "
+*Output:
+/bin/ls: cannot access 'fdnsa': No such file or directory
+/bin/ls: cannot access 'jklnv213!@!jda': No such file or directory
+Program exited with status 2
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****ls two file which doesn't exit, the same output as we run it in normal shell
+
+
+
+1.12
+*Run " !@#$%  "
+*Output:
+
+Command !@#% not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****output relevant to the step2 this argument cannot be recognized
+
+
+
+Step 2: Improve commands
+-Search the Path environment variable for commands
+-Command can take arguments(seperated by white spaces)
+
+
+-Search the Path environment variable for commands
+
+2.0
+*Run "   cat    Makefile  "
+*Output:
+
+myshell:myshell.cpp
+        g++ -o myshell -ggdb3 -Wall -Werror -pedantic -std=gnu++98 myshell.cpp
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+
+**reason for correct:
+****can ignore extra whitespace
+****search among $Path to find the directory of cat.
+****cat the content of Makefile. same ouput as I do in the original shell.
+
+
+2.1
+(1)*Run "cat . . "
+*Output:
+
+/bin/cat: .: Is a directory
+/bin/cat: .: Is a directory
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****cat two ".",which is two directories, the same output as we run /usr/bin/clear Makefile in normal shell
+**** myshell can get more than one argument
+(2)
+*Run "cat . Makefile "
+*Output:
+
+/bin/cat: .: Is a directory
+myshell:myshell.cpp parse_command.h build_in_command.h
+        g++ -o myshell -ggdb3 -Wall -Werror -pedantic -std=gnu++98 myshell.cpp
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+
+**reason for correct:
+****cat one "." and one file named Makefile,same output in the original shell
+**** myshell can get more than one kind of argument
+
+2.2
+*Run "ls fdnsajklnv213!@!jda "
+*Output:
+
+/bin/ls: cannot access 'fdnsajklnv213!@!jda': No such file or directory
+Program exited with status 2
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****if ls a file which doesn't exit, the same output as we run /usr/bin/clear Makefile in normal shell
+
+
+2.3
+*Run "ls -a"
+*Output:
+
+.  ..  build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****myshell can take the description short option
+
+2.4
+(1)*Run "!@#"
+*Output:
+
+Command !@# not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****it does not contain '/'
+****!@#$ is not a valid file among the path directory
+
+(2)
+*Run "!@ #"
+*Output:
+
+Command !@ not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****it does not contain '/'
+****!@ and # are both not valid file among the path directory
+
+
+2.5
+*Run "/bin"
+*Output:
+
+Command /bin not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****/bin is a valid dir but not a file the shell can excute
+
+2.5
+*Run "/bin/123456!@#$%^"
+*Output:
+
+Command /bin/123456!@#$%^ not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****file 123456!@#$%^ doesn't exist in that dir(/bin),so the shell cannot excute
+
+2.6
+*Run "/bin/"
+*Output:
+
+Command /bin/ not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****/bin/ is not a file or dir the shell can recognize, the similar output as we run it in normal shell
+
+
+2.7
+*Run "./test/echo_test a b"
+*Output:
+
+./test/echo_test
+a
+b
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****myshell can take relative directory start with "./"
+
+
+
+2.9
+*Run "echo    a        b    23"
+*Output:
+
+a b 23
+Program exited with status 0
+
+**reason for correct:
+****myshell can ignore extra whitespace for argument
+
+2.10
+*Run "echo   \ a\ b aac\ \ d"
+*Output:
+
+ a b aac  d
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****change "\ " to " "
+****shell should parse the argument as " a b" and "aac  d",echo should print in this way.
+****there might be something vague between"b" and "aac",so I add the following test
+
+
+2.11
+*Run "./test/echo_test   \ a\ b aac\ \ d"
+*Output:
+
+./test/echo_test
+ a b
+aac  d
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****echo_test is a test file I write to print cmd and each argument accordingly
+****this is the right way to deal with "\ "
+
+2.12
+*Run "   ./test/echo_test   a\ d b c \ d  "
+*Output:
+
+ ./test/echo_test
+a d
+b
+c
+ d
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****shell can ignore the leading whitespace and tailing whitespace
+****shell should parse the argument as "a d","b","c"and" d",./test/echo_test file can show and print cmd and each argument in this way.
+
+
+Step 3:Directories and Variables
+- Add the "cd" command to change the current directory
+- The prompt should show the current directory before the $
+- Your shell should provide access to variables.
+- If the user writes $varname on the command line, your shell should
+replace it with the current value of that variable.
+
+
+
+
+3.1
+(1)*Run "cd"
+*Output:
+
+myshell:/home/cw373 $
+
+**reason for correct:
+****when entering cd with no argument, currenr directory should go to the HOME directory as the normal shell do
+
+(2)*then Run "    cd    ece551      "
+*Output:
+
+myshell:/home/cw373/ece551 $
+
+**reason for correct:
+****cd can enter directory which is within the current directory
+****cd can ignore extra whitespace
+
+
+(3)*then Run "cd ../ece551"
+*Output:
+
+myshell:/home/cw373/ece551 $
+
+**reason for correct:
+****cd can enter relative directory
+
+
+(4)*then Run " cd ./mp_miniproject/project/12345!@#$%"
+*Output:
+
+path cannot be parsed
+myshell:/home/cw373/ece551 $
+
+**reason for correct:
+****when entering a directory which doesn't exist, shell should report the path cannot be parsed.
+****then remain in the original directory
+
+
+(5)*then Run " cd /bin "
+*Output:
+
+myshell:/bin $
+
+**reason for correct:
+****cd can enter absolute directory
+
+(6)*then Run " cd ./ls"
+*Output:
+
+path cannot be parsed
+myshell:/bin $
+
+**reason for correct:
+****/bin/ls is not a directory, it is a file, so it cannot be parsed
+
+
+(7)
+*then Run " cd / bin"
+*Output:
+
+argvs is empty
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****whitespace between "/" and directory is not valid
+
+(8)*then Run " cd !@#$%"
+*Output:
+
+path cannot be parsed
+myshell:/bin $
+
+**reason for correct:
+****!@#$% doesn't contain "/" and not exist,cannot be parsed as either file or directory
+
+
+(9)*then Run "exit"
+*Output:
+
+exit the shell
+Program exited with status 0
+cw373@ece551:~/ece551/mp_miniproject/project$
+
+**reason for correct:
+****when entering a directory which doesn't exist, shell should report the path cannot be parsed.
+****then remain in the original directory
+
+3.2
+(1)*Run "cd .. "
+*Output:
+
+myshell:/home/cw373/ece551/mp_miniproject $
+
+**reason for correct:
+****when entering cd .., we should go back to the parent directory
+****"myshell:/home/cw373/ece551/mp_miniproject" is the parent directory of
+****"myshell:/home/cw373/ece551/mp_miniproject/project"
+
+(2)
+*then input with keyboard ctrl+D
+*Output:
+
+exit my shell
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject $
+
+**reason for correct:
+****ctrl+D denotes that the input encounter the "EOF" for a file, shell should exist
+****above is the case for shell to exist;
+
+3.3
+(1)*Run "  set   aa    ls  "
+*then Run "  $aa  "
+*Output:
+
+build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****we can ignore the extra whitespace
+****enter "  set   aa    ls  ",we should store var(aa) as value(ls)
+****when entering "  $aa  ",we should parse it as "  ls  "
+****as what we mentioned above, ls should print the content of the directory as this shows
+
+(2) AFTER (1)
+*Run "set aa pwd"
+*then Run "$aa"
+*Output:
+
+/home/cw373/ece551/mp_miniproject/project
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****var' value can be replaced, and should be replaced by the most recent one
+
+(3) After (1)
+*Run "set $aa pwd"
+*then Run "$ls"
+*Output:
+
+/home/cw373/ece551/mp_miniproject/project
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****"set $aa pwd" is parsed as "set ls pwd"
+
+(4) After (3)
+
+*Run "set $aa $ls"
+*then Run" $ls "
+*output:
+/home/cw373/ece551/mp_miniproject/project
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****"set $aa $ls" parsed as"set ls pwd" ,same as the above output.
+
+3.4
+*Run " set aaa ab\ d"
+*then Run "./test/echo_test bcd$a$aaa $aaaa $aaAs"
+*Output:
+
+./test/echo_test
+bcdaab d
+ab da
+aaAs
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****we can ignore the extra whitespace,var should be case sensitive
+****enter "set aaa ab\ d",we should store var(aaa) as value("ab d")
+****when entering "./test/echo_test bcd$a$aaa $aaaa $aaAs",we should print all the element in argv[]
+****in this case,bcd$a should not be recognized, $aaaa should only be recognized for the leading "$aaa","$aaA" should not be parsed
+****therefore, to be parsed correctly, input should be "bcda"ab d" ab da aass" .Element inside of "" denotes the string replaced by $aaa
+****this string is parsed the same way as we enter "./test/echo_test bcdaab\ d ab da aass"
+
+3.5
+(1)*Run "set aa% ls"
+*Output:
+
+invalid var
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****var should only consists of letters,numbers and underscore
+
+
+(2)*Run "set % ls"
+*Output:
+
+invalid var
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****var should only consists of letters,numbers and underscore
+
+
+(3)*Run "set %~!@ ls"
+*Output:
+
+invalid var
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****var should only consists of letters,numbers and underscore
+3.6
+*Run "set a "
+*then Run"./test/echo_test aa$aa"
+*Output:
+
+./test/echo_test
+aaa
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****in case there are apparent value, make the value of var to be ""
+
+3.7
+*Run "set _ ls   -a"
+*then Run"$_"
+*Output:
+
+.  ..  build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****value can contain whitespace
+****"_"can be var
+****enter "ls -a" in original shell have the same output
+
+3.8
+*Run "set a ls -"
+*Run "set b a"
+(1)*then Run"$a$b"
+*Output:
+
+.  ..  build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****for "$a$b"there is no space between the value of a and value of b
+****enter "ls -a" in original shell have the same output
+
+(2)*then Run"$a $b"
+*Output:
+
+/bin/ls: cannot access '-': No such file or directory
+/bin/ls: cannot access 'a': No such file or directory
+Program exited with status 2
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****for"$a $b"there will be one space between the value of a and value of b
+****enter "ls -a" in original shell have the similar output
+
+3.9
+*Run "set _ pwd"
+*then Run"set _ ls"
+*then Run"$_"
+*Output:
+
+.  ..  build_in_command.h  Makefile  myshell  myshell.cpp  parse_command.h  test
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****"_"can be var, can be replaced by other value
+
+
+
+3.10
+(1)*Run "set a 4 5  6"
+*then enter env
+*Output(leave out the default env):
+
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****set var and value but not export it, so it doesn't exist in env
+
+(2)
+*then Run "   export   a   "
+*Output(leave out the default env):
+a=4 5  6
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****in case there are apparent value, make the value of var to be ""
+****export can ignore extra whitespace
+****for the value of set,whitespace between two letters can be reserved.
+
+(3)
+*then Run "set a ls"
+*then enter env
+*Output(leave out the default env):
+
+a=4 5  6
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****the value just set but not export into the environment
+
+(4)
+*then Run "export a"
+*then enter env
+*Output(leave out the default env):
+
+a=ls
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****the value just set but not export into the environment
+
+(5)
+*then Run "set b !@#"
+*then Run "export b"
+*then enter env
+*Output(leave out the default env):
+
+a=ls
+b=!@#
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+
+**reason for correct:
+****when exporting a new var-value pair, add it to the end of env
+
+(6)
+*then Run "set a 123  "
+*then Run "export a"
+*then enter env
+*Output(leave out the default env):
+
+a=123
+b=!@#
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+
+**reason for correct:
+****a can still be edited in env
+
+
+3.10
+*Run "set PWD $PWD/test"
+*then enter env
+*Output(leave out the default env):
+
+PWD=/home/cw373/ece551/mp_miniproject/project
+
+**reason for correct:
+****PWD already have var and value in env, but simply set PWD to some value cannot change its value in env
+
+(2)
+*then Run"export PWD"
+*then enter env
+*Output(leave out the default env):
+
+PWD=/home/cw373/ece551/mp_miniproject/project/test
+
+**reason for correct:
+****after export it, it can be seen changed in the env
+
+(3)
+*then Run"cd $PWD"
+*output:
+myshell:/home/cw373/ece551/mp_miniproject/project/test $
+
+**reason for correct:
+****the same as "cd /home/cw373/ece551/mp_miniproject/project/test",Since it is changed by previous step
+
+(4)
+*then Run"set PWD 123"
+*then Run"export PWD"
+*then enter env
+*Output(leave out the default env):
+
+PWD=123
+
+**reason for correct:
+****using the above method, PWD can be changed to anything
+
+(5)
+*then Run"$PWD"
+*Output(leave out the default env):
+
+Command 123 not found
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****not export, but now PWD is locally  123
+
+3.11
+*Run "export"
+*Output(leave out the default env):
+
+no var to input
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project/test $
+
+**reason for correct:
+****no var to input
+
+
+3.12
+*Run "export a"
+*Output(leave out the default env):
+
+no such var
+myshell:/home/cw373/ece551/mp_miniproject/project/test $
+
+**reason for correct:
+****there is no local var named a
+
+3.13
+*Run "set b 6"
+*Run "set a 7"
+*Run "export a b"
+*Output(leave out the default env):
+
+too much var
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project/test $
+
+
+**reason for correct:
+****there are too much vars,export cannot export more than one var
+
+
+
+3.14
+*Run "set b "
+*Run "export b"
+*Output(leave out the default env):
+
+b=
+Program exited with status 0
+myshell:/home/cw373/ece551/mp_miniproject/project/test $
+
+
+**reason for correct:
+****var b's value is ""
+
+3.15
+*Run "set b"
+
+*Output:
+
+invalid var
+Program exited with status 1
+myshell:/home/cw373/ece551/mp_miniproject/project $
+
+**reason for correct:
+****when there are only two argument, and there is not even whitespace after the var, then nothing should be assigned to that var.
+
+3.16
+ *Run "set HOME /home/cw373/ece551/mp_miniproject"
+then*Run "cd"
+*Output:
+myshell:/home/cw373 $
+
+**reason for correct:
+****not follow the HOME we set since it is not in env
+
+then
+*Run "export HOME"
+*Run "cd"
+
+*Output:
+myshell:/home/cw373/ece551 $
+
+
+**reason for correct:
+****after export, HOME is changed in the env, and it then can be parsed.

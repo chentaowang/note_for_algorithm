@@ -1,0 +1,2 @@
+myshell:myshell.cpp parse_command.h build_in_command.h
+        g++ -o myshell -ggdb3 -Wall -Werror -pedantic -std=gnu++98 myshell.cpp

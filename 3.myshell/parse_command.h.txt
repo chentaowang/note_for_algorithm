@@ -1,0 +1,163 @@
+#ifndef __PARSE_COMMAND_H__
+#define __PARSE_COMMAND_H__
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+extern char ** environ;
+
+void parsepath(  //parse paths into each path and store them in vector
+    std::string path,
+    std::vector<std::string> & container) {
+  std::stringstream ss;
+  std::string tmp;
+  ss << path;
+  while (getline(ss, tmp, ':')) {
+    container.push_back(tmp);
+  }
+}
+
+bool find_file_in_dir(std::string file, std::string dir) {  //find if file exists in the directory
+  DIR * curr_dir;
+  struct dirent * ent;
+  if ((curr_dir = opendir(dir.c_str())) == 0) {  //open the directory
+
+    closedir(curr_dir);
+    return false;
+  }
+  else {
+    while ((ent = readdir(curr_dir)) != NULL) {  //traverse all the file in the directory
+      std::string file_name(ent->d_name);
+
+      if (file_name == "." || file_name == ".." ||
+          ent->d_type == DT_DIR) {  //skip the case for directory,"."and"..",
+        continue;
+      }
+      else if (ent->d_type == DT_REG) {  //check file's name
+        if (file_name == file) {
+          closedir(curr_dir);
+          return true;
+        }
+      }
+    }
+  }
+  closedir(curr_dir);  //close the directory before exit
+  return false;
+}
+
+std::string parse_cmd(std::string line, bool & valid_cmd) {
+  size_t j = 0;  //left position for cmd
+  size_t i = 0;  //right position for cmd
+
+  std::string cmd;
+  while (line[j] ==
+         ' ') {  //ignore the leading white space,find the left position of cammand in the line
+    j++;
+    i++;
+  }
+  while (line[i] != ' ' && i < line.size()) {
+    i++;
+  }
+  cmd = line.substr(j, i - j);  //get the command name from the input
+  if (cmd == "cd")
+    return "cd";  // for build in command and exit
+  if (cmd == "set")
+    return "set";
+  if (cmd == "export")
+    return "export";
+  if (cmd == "exit")
+    return "exit";
+  if (cmd.find('/') != std::string::npos) {  //case: command name contain '/'
+    size_t m = cmd.size() - 1;
+    while (cmd[m] != '/') {
+      m--;
+    }                                           //find the last '/'
+    std::string dir = cmd.substr(0, m);         //store the directory's name
+    std::string file_name = cmd.substr(m + 1);  //store the file's name
+
+    if (find_file_in_dir(file_name,
+                         dir)) {  //check if the corresponding file'name exists in the directory
+
+      return cmd;
+    }
+    else {
+      std::cout << "Command " << cmd << " not found\n";
+      valid_cmd = false;
+      return "";
+    }
+  }
+  else {  //case:command name not contain '/'
+    std::string all_path(getenv("PATH"));
+    std::vector<std::string> path_container;
+    parsepath(all_path, path_container);  //put all path seperately in a vector
+    for (size_t i = 0; i < path_container.size(); i++) {
+      std::string one_path = path_container[i];
+      if (find_file_in_dir(
+              cmd,
+              one_path)) {  //if cmd is found among path, parse the cmd into the form:path_dir/file
+        return one_path + "/" + cmd;
+      }
+    }
+    std::cout << "Command " << cmd << " not found \n";
+    valid_cmd = false;
+  }
+  return cmd;
+}
+
+char ** parse_arg(std::string cmd, std::string line, int & size_arg) {
+  std::vector<std::string> arg;
+  arg.push_back(cmd);    //first element of arg should be cmd
+  std::string tmp = "";  //store each argument
+  size_t i = 0;
+  while (line[i] == ' ') {  //ignore the leading whitespace
+    i++;
+  }
+  while (line[i] != ' ' && i < line.size()) {  //ignore the cmd part in the line
+    i++;
+  }
+  i++;
+  for (; i < line.size(); i++) {  //parse the arg part of input
+    if (line[i] != ' ' && line[i] != '\\') {
+      tmp += line[i];
+    }
+    else if (line[i] == ' ') {  //ignore extra " "
+      if (tmp != "") {
+        arg.push_back(tmp);
+        tmp = "";
+      }
+    }
+    else if (line[i] == '\\') {  // change "\ " to " "
+      if (i < line.size() - 1 && line[i + 1] == ' ') {
+        tmp += ' ';
+        i++;
+      }
+    }
+  }
+  if (i == line.size() && !tmp.empty()) {  //corner case: input line end without " "
+    arg.push_back(tmp);
+  }
+
+  size_arg = arg.size() + 1;  //to be used by execve,char** arg should end with NULL
+  char ** res = (char **)malloc(
+      size_arg * sizeof(char *));  //change the vector<string> to char** for the use of execve
+  for (int m = 0; m < int(arg.size()); m++) {
+    res[m] = (char *)malloc(arg[m].size() + 1);
+    strcpy(res[m], arg[m].c_str());
+  }
+  res[arg.size()] = NULL;
+
+  return res;
+}
+
+#endif
