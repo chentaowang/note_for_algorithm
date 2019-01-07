@@ -140,7 +140,7 @@ ______________________________________________________________________
     }
 
     string todev(string w) {
-        w = tolow(w);
+        w = tolow(w);//!!! important
         for (auto & c: w)
             if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u')
                 c = '#';

@@ -13,7 +13,7 @@ using namespace std;
 
 	int main()
 	{
-		priority_queue<int, vector<int>, compare > pq;
+		priority_queue<int, vector<int>, compare > pq;  //or: compare can be replaced by greater<int>
 
 		pq.push(3);
 		pq.push(5);

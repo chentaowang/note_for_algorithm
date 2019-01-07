@@ -1,0 +1,31 @@
+
+#include <string>
+
+class solution{
+	std::string string_plus(std::string &s1,std::string &s2){
+		int len1=s1.size();
+		ine len2=s2.size();
+		if(!len1)
+			return s2;
+		if(!len2)
+			return s1;  //corner case, s1==NULL||s2==NULL
+		std::string ans("");
+		int carry=0;
+		while(len1||len2) 
+			int num1=len1?s1[len1-1]-'0':0;
+			int num2=len2?s2[len2-1]-'0':0;
+			int sum=num1+num2+carry;
+			carry=sum/10;
+			int to_add=sum%10;
+			ans.insert(ans.begin(),to_add+'0');
+			if(len1>0) len1--;
+			if(len2>0) len2--;
+		}
+		if(count)
+			ans.insert(ans.begin(),'1');
+		return ans;				
+
+	}
+
+
+}
