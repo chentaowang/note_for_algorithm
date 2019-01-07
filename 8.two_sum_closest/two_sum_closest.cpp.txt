@@ -1,0 +1,34 @@
+class solution{
+	int two_sum_closet(vector<int> & nums,int target){
+		if(nums.size()<2)
+			return -1;
+		sort(nums.begin(),nums.end());
+		int left=0;
+		int right=nums.size()-1;
+		int diff=INT_MAX;
+		int ans=nums[left]+nums[right];
+		while(left<right){
+			int sum=nums[left]+nums[right];
+			if(sum==target){
+				return sum;	
+			}
+			else if(sum>target){
+				if(sum-target<diff){
+					diff=sum-target;
+					ans=sum;
+				}
+				right--;
+			}
+			else if(sum<target){
+				if(target-sum<diff){
+					diff=target-sum;
+					ans=sum;
+				}
+				left++;
+
+			}
+		}
+		return ans;
+
+	}	
+}
